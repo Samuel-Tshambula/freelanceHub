@@ -17,6 +17,7 @@ import PostTask from './components/Tasks/PostTask';
 import MyTasks from './components/Tasks/MyTasks';
 import PaymentHistory from './components/Payment/PaymentHistory';
 import UserProfile from './components/Profile/UserProfile';
+import NotificationsList from './components/Notifications/NotificationsList';
 
 function AppContent() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -116,7 +117,7 @@ function AppContent() {
         return <UserProfile setCurrentPage={setCurrentPage} />;
       
       case 'notifications':
-        return <div className="text-center py-12">Notifications - En cours de développement</div>;
+        return <NotificationsList />;
       
       case 'settings':
         return <div className="text-center py-12">Paramètres - En cours de développement</div>;

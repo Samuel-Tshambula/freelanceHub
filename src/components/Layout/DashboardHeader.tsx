@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+<<<<<<< HEAD
 import { useApp } from '../../contexts/AppContext';
 import Avatar from '../Common/Avatar';
 import { getProfileImage } from '../../utils/profileUtils';
+=======
+import { useNotifications } from '../../hooks/useNotifications';
+>>>>>>> f317285c94ffac82998b9b36b848922e5200493f
 import { 
   Bell, 
   User, 
@@ -24,11 +28,18 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ currentPage, setCurrentPage }) => {
   const { user, logout } = useAuth();
-  const { notifications } = useApp();
+  const { unreadCount, refetch } = useNotifications();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  useEffect(() => {
+    const handleNotificationsRead = () => {
+      refetch();
+    };
+
+    window.addEventListener('notificationsRead', handleNotificationsRead);
+    return () => window.removeEventListener('notificationsRead', handleNotificationsRead);
+  }, [refetch]);
 
   const getDashboardItems = () => {
     if (!user) return [];

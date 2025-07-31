@@ -44,6 +44,7 @@ const UserProfile: React.FC<UserProfileProps> = () => {
     : enterprises.find(e => e.id === user?.id);
 
   const [profileData, setProfileData] = useState({
+<<<<<<< HEAD
     bio: user?.role === 'agent' 
       ? (currentUserData as any)?.bio || user?.bio || "Développeur web passionné"
       : (currentUserData as any)?.description || user?.description || "Entreprise innovante",
@@ -52,6 +53,16 @@ const UserProfile: React.FC<UserProfileProps> = () => {
     phone: user?.phone || "+33 6 12 34 56 78",
     skills: user?.role === 'agent' 
       ? (currentUserData as any)?.skills || user?.skills || ["React", "Node.js", "TypeScript"]
+=======
+    bio: currentUserData?.role === 'agent' 
+      ? (currentUserData as any)?.bio || "Développeur web passionné"
+      : (currentUserData as any)?.description || "Entreprise innovante",
+    location: "Paris, France",
+    website: (currentUserData as any)?.website || (user?.role === 'agent' ? "https://portfolio.dev" : "https://entreprise.com"),
+    phone: "+33 6 12 34 56 78",
+    skills: currentUserData?.role === 'agent' 
+      ? (currentUserData as any)?.skills || ["React", "Node.js", "TypeScript"]
+>>>>>>> f317285c94ffac82998b9b36b848922e5200493f
       : ["Développement Web", "Design UX/UI", "Marketing Digital"],
     portfolio: [
       {
@@ -64,7 +75,11 @@ const UserProfile: React.FC<UserProfileProps> = () => {
     ],
     paymentMethods: user?.role === 'agent' 
       ? [
+<<<<<<< HEAD
           { method: (currentUserData as any)?.paymentMethod || user?.paymentMethod || "Orange Money", number: (currentUserData as any)?.paymentNumber || user?.paymentNumber || "+243 89 123 4567" }
+=======
+          { method: (currentUserData as any)?.paymentMethod || "Orange Money", number: (currentUserData as any)?.paymentNumber || "+243 89 123 4567" }
+>>>>>>> f317285c94ffac82998b9b36b848922e5200493f
         ]
       : []
   });

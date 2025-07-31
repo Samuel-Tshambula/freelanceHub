@@ -16,9 +16,11 @@ const TaskApplications: React.FC<TaskApplicationsProps> = ({ taskId, isOpen }) =
     setProcessing(applicationId);
     
     try {
-      await applicationsAPI.updateApplicationStatus(applicationId, status);
-      refetch(); // Refresh the applications list
-      alert(`Candidature ${status === 'accepted' ? 'acceptée' : 'refusée'} avec succès !`);
+      const response = await applicationsAPI.updateApplicationStatus(applicationId, status);
+      if (response.success) {
+        refetch(); // Refresh the applications list
+        alert(`Candidature ${status === 'accepted' ? 'acceptée' : 'refusée'} avec succès !`);
+      }
     } catch (error: any) {
       alert(error.message || 'Erreur lors de la mise à jour de la candidature');
     } finally {
