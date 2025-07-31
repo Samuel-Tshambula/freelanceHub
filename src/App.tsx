@@ -18,7 +18,7 @@ import PaymentHistory from './components/Payment/PaymentHistory';
 import UserProfile from './components/Profile/UserProfile';
 
 function AppContent() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState('home');
 
   // Rediriger vers main-home lors de la connexion
@@ -27,6 +27,14 @@ function AppContent() {
       setCurrentPage('main-home');
     }
   }, [isAuthenticated, currentPage]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     // Si l'utilisateur n'est pas connecté, afficher les pages publiques

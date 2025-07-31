@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
+import { useMyTasks } from '../../hooks/useMyTasks';
+import { useApplicationsCount } from '../../hooks/useApplicationsCount';
+import TaskApplications from './TaskApplications';
 import { 
   Eye, 
   Users, 
@@ -18,52 +20,12 @@ interface MyTasksProps {
 
 const MyTasks: React.FC<MyTasksProps> = ({ setCurrentPage }) => {
   const { user } = useAuth();
-  const { tasks, applications, proofs, payments, agents, updateApplication, updateTask, addNotification } = useApp();
+  const { tasks: myTasks, loading, error } = useMyTasks();
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState<string | null>(null);
   const [showRatingModal, setShowRatingModal] = useState<string | null>(null);
 
-  const myTasks = tasks.filter(task => task.createdBy === user?.id);
 
-  const handleAcceptApplication = (applicationId: string, taskId: string) => {
-    updateApplication(applicationId, { status: 'accepted' });
-    updateTask(taskId, { status: 'assigned', assignedTo: [applications.find(app => app.id === applicationId)?.agentId || ''] });
-    
-    // Notify agent
-    const application = applications.find(app => app.id === applicationId);
-    const task = tasks.find(t => t.id === taskId);
-    if (application && task) {
-      addNotification({
-        userId: application.agentId,
-        title: 'Candidature acceptée !',
-        message: `Votre candidature pour "${task.title}" a été acceptée`,
-        type: 'success',
-        read: false
-      });
-    }
-  };
-
-  const handleRejectApplication = (applicationId: string) => {
-    updateApplication(applicationId, { status: 'rejected' });
-    
-    // Notify agent
-    const application = applications.find(app => app.id === applicationId);
-    const task = tasks.find(t => t.id === application?.taskId);
-    if (application && task) {
-      addNotification({
-        userId: application.agentId,
-        title: 'Candidature refusée',
-        message: `Votre candidature pour "${task.title}" n'a pas été retenue`,
-        type: 'warning',
-        read: false
-      });
-    }
-  };
-
-  const handlePaymentSubmitted = () => {
-    setShowPaymentModal(null);
-    alert('Paiement marqué comme effectué. L\'agent sera notifié pour confirmation.');
-  };
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -89,13 +51,29 @@ const MyTasks: React.FC<MyTasksProps> = ({ setCurrentPage }) => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">Erreur: {error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mes tâches</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Gérez vos tâches publiées et suivez leur progression
+            Gérez vos tâches publiées et suivez leur progression ({myTasks.length} tâche(s))
           </p>
         </div>
       </div>
@@ -104,13 +82,13 @@ const MyTasks: React.FC<MyTasksProps> = ({ setCurrentPage }) => {
         {/* Task List */}
         <div className="lg:col-span-2 space-y-4">
           {myTasks.map((task) => {
-            const taskApps = applications.filter(app => app.taskId === task.id);
-            const pendingApps = taskApps.filter(app => app.status === 'pending');
-            const taskProofs = proofs.filter(proof => proof.taskId === task.id);
-            const taskPayments = payments.filter(payment => payment.taskId === task.id);
+            const ApplicationsCount = () => {
+              const count = useApplicationsCount(task._id);
+              return count;
+            };
 
             return (
-              <div key={task.id} className="bg-white rounded-lg shadow-md p-6">
+              <div key={task._id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{task.title}</h3>
@@ -126,32 +104,32 @@ const MyTasks: React.FC<MyTasksProps> = ({ setCurrentPage }) => {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{taskApps.length}</div>
+                    <div className="text-2xl font-bold text-blue-600"><ApplicationsCount /></div>
                     <div className="text-xs text-gray-500">Candidatures</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600">{pendingApps.length}</div>
+                    <div className="text-2xl font-bold text-yellow-600">0</div>
                     <div className="text-xs text-gray-500">En attente</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{taskProofs.length}</div>
+                    <div className="text-2xl font-bold text-purple-600">0</div>
                     <div className="text-xs text-gray-500">Preuves</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{taskPayments.length}</div>
+                    <div className="text-2xl font-bold text-green-600">0</div>
                     <div className="text-xs text-gray-500">Paiements</div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {task.skills.slice(0, 3).map((skill, index) => (
+                  {(task.skills || []).slice(0, 3).map((skill: string, index: number) => (
                     <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {skill}
                     </span>
                   ))}
-                  {task.skills.length > 3 && (
+                  {(task.skills || []).length > 3 && (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      +{task.skills.length - 3} autres
+                      +{(task.skills || []).length - 3} autres
                     </span>
                   )}
                 </div>
@@ -162,125 +140,28 @@ const MyTasks: React.FC<MyTasksProps> = ({ setCurrentPage }) => {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => setSelectedTask(selectedTask === task.id ? null : task.id)}
+                      onClick={() => setSelectedTask(selectedTask === task._id ? null : task._id)}
                       className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <Eye className="w-4 h-4 mr-1" />
-                      {selectedTask === task.id ? 'Masquer' : 'Détails'}
+                      {selectedTask === task._id ? 'Masquer' : 'Détails'}
                     </button>
-                    {task.status === 'completed' && (
-                      <>
-                        <button
-                          onClick={() => setShowPaymentModal(task.id)}
-                          className="inline-flex items-center px-3 py-1 border border-green-600 rounded-md text-sm font-medium text-green-600 hover:bg-green-50 transition-colors"
-                        >
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          Marquer payé
-                        </button>
-                        <button
-                          onClick={() => setShowRatingModal(task.id)}
-                          className="inline-flex items-center px-3 py-1 border border-yellow-600 rounded-md text-sm font-medium text-yellow-600 hover:bg-yellow-50 transition-colors"
-                        >
-                          <Star className="w-4 h-4 mr-1" />
-                          Évaluer
-                        </button>
-                      </>
-                    )}
                   </div>
                 </div>
 
                 {/* Task Details */}
-                {selectedTask === task.id && (
-                  <div className="mt-6 border-t pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Candidatures */}
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                          <Users className="w-4 h-4 mr-2" />
-                          Candidatures ({taskApps.length})
-                        </h4>
-                        <div className="space-y-3">
-                          {taskApps.map((app) => {
-                            const agent = agents.find(a => a.id === app.agentId);
-                            return (
-                              <div key={app.id} className="border rounded-lg p-3">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="font-medium">{agent?.name}</div>
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    app.status === 'pending' 
-                                      ? 'bg-yellow-100 text-yellow-800'
-                                      : app.status === 'accepted'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {app.status === 'pending' ? 'En attente' : 
-                                     app.status === 'accepted' ? 'Acceptée' : 'Refusée'}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-2">{app.message}</p>
-                                <div className="text-xs text-gray-500 mb-2">
-                                  Note: {agent?.rating}/5 • {agent?.completedTasks} tâches terminées
-                                </div>
-                                {app.status === 'pending' && (
-                                  <div className="flex space-x-2">
-                                    <button
-                                      onClick={() => handleAcceptApplication(app.id, task.id)}
-                                      className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
-                                    >
-                                      Accepter
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectApplication(app.id)}
-                                      className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
-                                    >
-                                      Refuser
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                          {taskApps.length === 0 && (
-                            <p className="text-gray-500 text-sm">Aucune candidature</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Preuves */}
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Preuves soumises ({taskProofs.length})
-                        </h4>
-                        <div className="space-y-3">
-                          {taskProofs.map((proof) => (
-                            <div key={proof.id} className="border rounded-lg p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="text-sm font-medium">Preuve #{proof.id.slice(-4)}</div>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  proof.status === 'submitted' 
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : proof.status === 'approved'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {proof.status === 'submitted' ? 'Soumise' : 
-                                   proof.status === 'approved' ? 'Approuvée' : 'Rejetée'}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{proof.description}</p>
-                              <div className="text-xs text-gray-500">
-                                Soumise le {new Date(proof.submittedAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                          ))}
-                          {taskProofs.length === 0 && (
-                            <p className="text-gray-500 text-sm">Aucune preuve soumise</p>
-                          )}
-                        </div>
+                {selectedTask === task._id && (
+                  <>
+                    <div className="mt-6 border-t pt-6">
+                      <div className="text-sm text-gray-600 mb-4">
+                        <p><strong>Description complète:</strong> {task.description}</p>
+                        <p><strong>Durée:</strong> {task.duration}</p>
+                        <p><strong>Compétences:</strong> {(task.skills || []).join(', ')}</p>
+                        {task.deadline && <p><strong>Échéance:</strong> {new Date(task.deadline).toLocaleDateString()}</p>}
                       </div>
                     </div>
-                  </div>
+                    <TaskApplications taskId={task._id} isOpen={true} />
+                  </>
                 )}
               </div>
             );
@@ -327,23 +208,7 @@ const MyTasks: React.FC<MyTasksProps> = ({ setCurrentPage }) => {
         </div>
       </div>
 
-      {/* Payment Modal */}
-      {showPaymentModal && (
-        <PaymentModal
-          taskId={showPaymentModal}
-          isOpen={true}
-          onClose={() => setShowPaymentModal(null)}
-          onPaymentSubmitted={handlePaymentSubmitted}
-        />
-      )}
 
-      {/* Rating Modal */}
-      {showRatingModal && (
-        <RatingSystem
-          taskId={showRatingModal}
-          onClose={() => setShowRatingModal(null)}
-        />
-      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
+import { useTasks } from '../../hooks/useTasks';
 import { Plus, X, Upload, FileText } from 'lucide-react';
 
 interface PostTaskProps {
@@ -9,7 +9,9 @@ interface PostTaskProps {
 
 const PostTask: React.FC<PostTaskProps> = ({ setCurrentPage }) => {
   const { user } = useAuth();
-  const { addTask, addNotification } = useApp();
+  const { createTask } = useTasks();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -31,39 +33,37 @@ const PostTask: React.FC<PostTaskProps> = ({ setCurrentPage }) => {
     'Réseaux Sociaux', 'Photographie', 'Montage Vidéo', 'Traduction'
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) return;
 
     if (!formData.title || !formData.description || !formData.budget || !formData.duration) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      setError('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    addTask({
-      title: formData.title,
-      description: formData.description,
-      budget: parseFloat(formData.budget),
-      duration: formData.duration,
-      deadline: formData.deadline || undefined,
-      skills: formData.skills,
-      requiredProofs: formData.requiredProofs,
-      status: 'open',
-      createdBy: user.id
-    });
+    setLoading(true);
+    setError('');
 
-    // Add notification for successful task creation
-    addNotification({
-      userId: user.id,
-      title: 'Tâche publiée',
-      message: `Votre tâche "${formData.title}" a été publiée avec succès`,
-      type: 'success',
-      read: false
-    });
+    try {
+      await createTask({
+        title: formData.title,
+        description: formData.description,
+        budget: parseFloat(formData.budget),
+        duration: formData.duration,
+        deadline: formData.deadline || undefined,
+        skills: formData.skills.join(','),
+        requiredProofs: formData.requiredProofs.join(',')
+      });
 
-    alert('Tâche publiée avec succès !');
-    setCurrentPage('my-tasks');
+      alert('Tâche publiée avec succès !');
+      setCurrentPage('my-tasks');
+    } catch (error: any) {
+      setError(error.message || 'Erreur lors de la publication de la tâche');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addSkill = (skill: string) => {
@@ -111,6 +111,11 @@ const PostTask: React.FC<PostTaskProps> = ({ setCurrentPage }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -381,9 +386,10 @@ const PostTask: React.FC<PostTaskProps> = ({ setCurrentPage }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              disabled={loading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              Publier la tâche
+              {loading ? 'Publication...' : 'Publier la tâche'}
             </button>
           </div>
         </form>

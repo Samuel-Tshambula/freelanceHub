@@ -8,34 +8,23 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ setCurrentPage }) => {
   const { login } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<'agent' | 'enterprise' | 'admin'>('agent');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const mockUsers = {
-    agent: {
-      id: '1',
-      name: 'Samuel Tshambula',
-      email: 'samuel@example.com',
-      role: 'agent' as const,
-      createdAt: '2024-01-15T10:00:00Z'
-    },
-    enterprise: {
-      id: '3',
-      name: 'Jean Mukendi',
-      email: 'jean@techcorp.cd',
-      role: 'enterprise' as const,
-      createdAt: '2024-01-20T09:00:00Z'
-    },
-    admin: {
-      id: 'admin',
-      name: 'Administrateur',
-      email: 'admin@freelancelink.cd',
-      role: 'admin' as const,
-      createdAt: '2024-01-01T00:00:00Z'
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      await login(email, password);
+    } catch (error: any) {
+      setError(error.message || 'Erreur de connexion');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleLogin = () => {
-    login(mockUsers[selectedRole]);
   };
 
   return (
@@ -51,70 +40,57 @@ const LoginPage: React.FC<LoginPageProps> = ({ setCurrentPage }) => {
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Choisissez votre type de compte pour la démo :
-              </label>
-              <div className="space-y-3">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="agent"
-                    checked={selectedRole === 'agent'}
-                    onChange={(e) => setSelectedRole(e.target.value as 'agent')}
-                    className="mr-3 text-blue-600"
-                  />
-                  <div>
-                    <div className="font-medium">Agent / Freelance</div>
-                    <div className="text-sm text-gray-500">Postulez à des tâches et gagnez de l'argent</div>
-                  </div>
-                </label>
-
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="enterprise"
-                    checked={selectedRole === 'enterprise'}
-                    onChange={(e) => setSelectedRole(e.target.value as 'enterprise')}
-                    className="mr-3 text-blue-600"
-                  />
-                  <div>
-                    <div className="font-medium">Entreprise</div>
-                    <div className="text-sm text-gray-500">Publiez des tâches et trouvez des talents</div>
-                  </div>
-                </label>
-
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="admin"
-                    checked={selectedRole === 'admin'}
-                    onChange={(e) => setSelectedRole(e.target.value as 'admin')}
-                    className="mr-3 text-blue-600"
-                  />
-                  <div>
-                    <div className="font-medium">Administrateur</div>
-                    <div className="text-sm text-gray-500">Gérez la plateforme et les utilisateurs</div>
-                  </div>
-                </label>
+          <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                {error}
               </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="votre@email.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Mot de passe
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Votre mot de passe"
+              />
             </div>
 
             <button
-              onClick={handleLogin}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
             >
-              Se connecter avec Google (Démo)
+              {loading ? 'Connexion...' : 'Se connecter'}
             </button>
 
-            <div className="text-xs text-gray-500 text-center">
-              <p>Version démo - En production, l'authentification se fera via Google OAuth</p>
+            <div className="text-center">
+              <a href="http://localhost:5500/api/auth/google" className="text-sm text-blue-600 hover:text-blue-500">
+                Se connecter avec Google
+              </a>
             </div>
-          </div>
+          </form>
         </div>
 
         <div className="space-y-4">

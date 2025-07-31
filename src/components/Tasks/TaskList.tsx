@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
+import { useTasks } from '../../hooks/useTasks';
+import { useMyApplications } from '../../hooks/useMyApplications';
+import { applicationsAPI } from '../../services/api';
 import { 
   Briefcase, 
   DollarSign, 
@@ -14,18 +16,23 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = () => {
   const { user } = useAuth();
-  const { tasks, applications, addApplication, addNotification } = useApp();
+  const { tasks, loading, error } = useTasks();
+  const { applications, deleteApplication, addApplication } = useMyApplications();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
   const [budgetRange, setBudgetRange] = useState('');
+  const [applying, setApplying] = useState<string | null>(null);
+
+  // Ensure tasks is always an array
+  const tasksArray = Array.isArray(tasks) ? tasks : [];
 
   // Filter tasks based on user role
   const availableTasks = user?.role === 'agent' 
-    ? tasks.filter(task => task.status === 'open')
-    : tasks;
+    ? tasksArray.filter((task: any) => task.status === 'open')
+    : tasksArray;
 
   // Apply filters
-  const filteredTasks = availableTasks.filter(task => {
+  const filteredTasks = (availableTasks || []).filter((task: any) => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          task.description.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -40,42 +47,73 @@ const TaskList: React.FC<TaskListProps> = () => {
   });
 
   // Get all unique skills for filter
-  const allSkills = [...new Set(tasks.flatMap(task => task.skills))];
+  const allSkills = [...new Set(tasksArray.flatMap((task: any) => task.skills || []))];
 
-  const handleApply = (taskId: string) => {
-    if (!user) return;
+  const handleApply = async (taskId: string) => {
+    if (!user || applying) return;
     
-    // Check if already applied
-    const existingApplication = applications.find(
-      app => app.taskId === taskId && app.agentId === user.id
-    );
+    setApplying(taskId);
     
-    if (existingApplication) {
-      alert('Vous avez déjà postulé à cette tâche');
-      return;
-    }
-
-    addApplication({
-      taskId,
-      agentId: user.id,
-      message: 'Je suis intéressé par cette tâche et j\'ai les compétences requises.',
-      status: 'pending'
-    });
-
-    // Add notification for enterprise
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      addNotification({
-        userId: task.createdBy,
-        title: 'Nouvelle candidature',
-        message: `${user.name} a postulé pour votre tâche "${task.title}"`,
-        type: 'info',
-        read: false
+    try {
+      const response = await applicationsAPI.createApplication({
+        taskId,
+        message: 'Je suis intéressé par cette tâche et j\'ai les compétences requises.'
       });
+      
+      if (response.success) {
+        console.log('Application created:', response.data);
+        addApplication(response.data);
+        alert('Candidature envoyée avec succès !');
+      }
+    } catch (error: any) {
+      alert(error.message || 'Erreur lors de l\'envoi de la candidature');
+    } finally {
+      setApplying(null);
     }
-
-    alert('Candidature envoyée avec succès !');
   };
+
+  const handleCancelApplication = async (taskId: string) => {
+    const application = applications.find(app => {
+      const appTaskId = app.taskId?._id || app.taskId;
+      return appTaskId === taskId;
+    });
+    if (!application || applying) return;
+
+    setApplying(taskId);
+
+    try {
+      await deleteApplication(application._id);
+      alert('Candidature annulée avec succès !');
+    } catch (error: any) {
+      alert(error.message || 'Erreur lors de l\'annulation de la candidature');
+    } finally {
+      setApplying(null);
+    }
+  };
+
+  const getApplicationForTask = (taskId: string) => {
+    const application = applications.find(app => {
+      const appTaskId = app.taskId?._id || app.taskId;
+      return appTaskId === taskId;
+    });
+    return application;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">Erreur: {error}</p>
+      </div>
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -144,7 +182,7 @@ const TaskList: React.FC<TaskListProps> = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Toutes les compétences</option>
-              {allSkills.map(skill => (
+              {allSkills.map((skill: string) => (
                 <option key={skill} value={skill}>{skill}</option>
               ))}
             </select>
@@ -183,13 +221,10 @@ const TaskList: React.FC<TaskListProps> = () => {
 
       {/* Task List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredTasks.map((task) => {
-          const hasApplied = applications.some(
-            app => app.taskId === task.id && app.agentId === user?.id
-          );
+        {filteredTasks.map((task: any) => {
 
           return (
-            <div key={task.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div key={task._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{task.title}</h3>  
@@ -217,7 +252,7 @@ const TaskList: React.FC<TaskListProps> = () => {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {task.skills.map((skill, index) => (
+                {task.skills.map((skill: string, index: number) => (
                   <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {skill}
                   </span>
@@ -231,19 +266,34 @@ const TaskList: React.FC<TaskListProps> = () => {
                   Publié le {new Date(task.createdAt).toLocaleDateString()}
                 </div>
                 
-                {user?.role === 'agent' && task.status === 'open' && (
-                  <button
-                    onClick={() => handleApply(task.id)}
-                    disabled={hasApplied}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      hasApplied
-                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                  >
-                    {hasApplied ? 'Déjà postulé' : 'Postuler'}
-                  </button>
-                )}
+                {user?.role === 'agent' && task.status === 'open' && (() => {
+                  const existingApplication = getApplicationForTask(task._id);
+                  
+                  if (existingApplication) {
+                    return (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-green-600 font-medium">Déjà postulé</span>
+                        <button
+                          onClick={() => handleCancelApplication(task._id)}
+                          disabled={applying === task._id}
+                          className="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {applying === task._id ? 'Annulation...' : 'Annuler'}
+                        </button>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <button
+                      onClick={() => handleApply(task._id)}
+                      disabled={applying === task._id}
+                      className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {applying === task._id ? 'Envoi...' : 'Postuler'}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           );
