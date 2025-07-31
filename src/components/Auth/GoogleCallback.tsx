@@ -34,7 +34,13 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({ setCurrentPage }) => {
           let userData = response.data.user;
           // Vérifier si utilisateur existant essaie de s'inscrire
           if (!response.data.isNewUser && selectedRole) {
+            // Ne pas sauvegarder les données utilisateur
+            // Ne pas mettre à jour le contexte d'authentification
             localStorage.setItem('authError', 'Ce compte existe déjà. Veuillez vous connecter en utilisant le bouton "Se connecter avec Google".');
+            
+            // Nettoyer l'URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
             setLoading(false);
             setCurrentPage('role-selection');
             return;

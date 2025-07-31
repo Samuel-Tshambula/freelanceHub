@@ -35,6 +35,13 @@ function AppContent() {
 
   // Rediriger selon l'état de l'utilisateur
   useEffect(() => {
+    // Vérifier s'il y a une erreur d'authentification
+    const authError = localStorage.getItem('authError');
+    if (authError && currentPage !== 'role-selection') {
+      setCurrentPage('role-selection');
+      return;
+    }
+    
     if (isAuthenticated) {
       // Vérifier si le profil est complet
       const needsProfileCompletion = user && (
