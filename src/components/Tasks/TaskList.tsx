@@ -22,6 +22,7 @@ const TaskList: React.FC<TaskListProps> = () => {
   const [selectedSkill, setSelectedSkill] = useState('');
   const [budgetRange, setBudgetRange] = useState('');
   const [applying, setApplying] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Ensure tasks is always an array
   const tasksArray = Array.isArray(tasks) ? tasks : [];
@@ -63,6 +64,7 @@ const TaskList: React.FC<TaskListProps> = () => {
       if (response.success) {
         console.log('Application created:', response.data);
         addApplication(response.data);
+        setRefreshKey(prev => prev + 1); // Force re-render
         alert('Candidature envoyée avec succès !');
       }
     } catch (error: any) {
@@ -83,6 +85,7 @@ const TaskList: React.FC<TaskListProps> = () => {
 
     try {
       await deleteApplication(application._id);
+      setRefreshKey(prev => prev + 1); // Force re-render
       alert('Candidature annulée avec succès !');
     } catch (error: any) {
       alert(error.message || 'Erreur lors de l\'annulation de la candidature');

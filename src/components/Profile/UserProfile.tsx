@@ -42,13 +42,13 @@ const UserProfile: React.FC<UserProfileProps> = () => {
 
   const [profileData, setProfileData] = useState({
     bio: currentUserData?.role === 'agent' 
-      ? (currentUserData as any).bio || "Développeur web passionné"
-      : (currentUserData as any).description || "Entreprise innovante",
+      ? (currentUserData as any)?.bio || "Développeur web passionné"
+      : (currentUserData as any)?.description || "Entreprise innovante",
     location: "Paris, France",
-    website: (currentUserData as any).website || (user?.role === 'agent' ? "https://portfolio.dev" : "https://entreprise.com"),
+    website: (currentUserData as any)?.website || (user?.role === 'agent' ? "https://portfolio.dev" : "https://entreprise.com"),
     phone: "+33 6 12 34 56 78",
     skills: currentUserData?.role === 'agent' 
-      ? (currentUserData as any).skills || ["React", "Node.js", "TypeScript"]
+      ? (currentUserData as any)?.skills || ["React", "Node.js", "TypeScript"]
       : ["Développement Web", "Design UX/UI", "Marketing Digital"],
     portfolio: [
       {
@@ -61,7 +61,7 @@ const UserProfile: React.FC<UserProfileProps> = () => {
     ],
     paymentMethods: currentUserData?.role === 'agent' 
       ? [
-          { method: (currentUserData as any).paymentMethod || "Orange Money", number: (currentUserData as any).paymentNumber || "+243 89 123 4567" }
+          { method: (currentUserData as any)?.paymentMethod || "Orange Money", number: (currentUserData as any)?.paymentNumber || "+243 89 123 4567" }
         ]
       : []
   });
