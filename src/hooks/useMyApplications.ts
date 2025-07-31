@@ -1,59 +1,69 @@
 import { useState, useEffect } from 'react';
 import { applicationsAPI } from '../services/api';
 
-export const useMyApplications = () => {
-  const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+interface Application {
+  id: string;
+  taskId: string;
+  agentId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  proposedPrice: number;
+  coverLetter: string;
+  estimatedDuration: string;
+  createdAt: string;
+  task: {
+    id: string;
+    title: string;
+    description: string;
+    budget: number;
+    location: string;
+    duration: string;
+    status: string;
+  };
+}
 
-  const fetchMyApplications = async () => {
+export const useMyApplications = (page: number = 1, limit: number = 10, status?: string) => {
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await applicationsAPI.getMyApplications();
-      console.log('My applications response:', response);
+      setError(null);
+      
+      const response = await applicationsAPI.getMyApplications(page, limit, status);
+      
       if (response.success) {
-        const apps = Array.isArray(response.data.applications) ? response.data.applications : [];
-        console.log('Setting applications:', apps);
-        setApplications(apps);
+        setApplications(response.data.applications || []);
+        setTotalPages(response.data.pagination?.pages || 1);
+        setTotalCount(response.data.pagination?.total || 0);
+      } else {
+        setError(response.message || 'Erreur lors du chargement');
       }
-    } catch (error: any) {
-      console.error('Error fetching applications:', error);
-      setError(error.message);
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du chargement des candidatures');
       setApplications([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteApplication = async (applicationId: string) => {
-    try {
-      await applicationsAPI.deleteApplication(applicationId);
-      setApplications(prev => prev.filter(app => app._id !== applicationId));
-      return true;
-    } catch (error: any) {
-      throw error;
-    }
-  };
-
-  const addApplication = (application: any) => {
-    console.log('Adding application:', application);
-    setApplications(prev => {
-      const updated = [...prev, application];
-      console.log('Updated applications:', updated);
-      return updated;
-    });
-  };
-
   useEffect(() => {
-    fetchMyApplications();
-  }, []);
+    fetchApplications();
+  }, [page, limit, status]);
+
+  const refetch = () => {
+    fetchApplications();
+  };
 
   return {
     applications,
     loading,
     error,
-    refetch: fetchMyApplications,
-    deleteApplication,
-    addApplication
+    totalPages,
+    totalCount,
+    refetch
   };
 };

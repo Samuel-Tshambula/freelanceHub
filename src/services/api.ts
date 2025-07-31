@@ -85,6 +85,19 @@ export const authAPI = {
     }
     
     return response;
+  },
+
+  completeProfile: async (profileData: any) => {
+    const response = await apiRequest('/auth/complete-profile', {
+      method: 'POST',
+      body: JSON.stringify(profileData)
+    });
+    
+    if (response.success) {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    
+    return response;
   }
 };
 

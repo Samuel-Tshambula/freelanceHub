@@ -3,9 +3,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppProvider } from './contexts/AppContext';
 import Header from './components/Layout/Header';
 import DashboardHeader from './components/Layout/DashboardHeader';
-import LoginPage from './components/Auth/LoginPage';
-import RegisterPage from './components/Auth/RegisterPage';
+import RoleSelection from './components/Auth/RoleSelection';
 import GoogleCallback from './components/Auth/GoogleCallback';
+import ProfileCompletion from './components/Auth/ProfileCompletion';
 import HomePage from './components/Public/HomePage';
 import AboutPage from './components/Public/AboutPage';
 import ContactPage from './components/Public/ContactPage';
@@ -15,6 +15,7 @@ import EnterpriseDashboard from './components/Dashboard/EnterpriseDashboard';
 import TaskList from './components/Tasks/TaskList';
 import PostTask from './components/Tasks/PostTask';
 import MyTasks from './components/Tasks/MyTasks';
+import MyApplications from './components/Applications/MyApplications';
 import PaymentHistory from './components/Payment/PaymentHistory';
 import UserProfile from './components/Profile/UserProfile';
 import NotificationsList from './components/Notifications/NotificationsList';
@@ -32,12 +33,25 @@ function AppContent() {
     }
   }, []);
 
-  // Rediriger vers main-home lors de la connexion
+  // Rediriger selon l'état de l'utilisateur
   useEffect(() => {
-    if (isAuthenticated && (currentPage === 'login' || currentPage === 'register' || currentPage === 'home')) {
-      setCurrentPage('main-home');
+    if (isAuthenticated) {
+      // Vérifier si le profil est complet
+      const needsProfileCompletion = user && (
+        !user.role ||
+        (!user.profileCompleted &&
+          ((user.role === 'agent' && (!user.bio || !user.location)) ||
+           (user.role === 'enterprise' && (!user.companyName || !user.description || !user.location)))
+        )
+      );
+      
+      if (needsProfileCompletion && currentPage !== 'profile-completion') {
+        setCurrentPage('profile-completion');
+      } else if (!needsProfileCompletion && (currentPage === 'auth' || currentPage === 'profile-completion' || currentPage === 'home')) {
+        setCurrentPage('main-home');
+      }
     }
-  }, [isAuthenticated, currentPage]);
+  }, [isAuthenticated, user, currentPage]);
 
   if (loading) {
     return (
@@ -58,10 +72,13 @@ function AppContent() {
       return <HomePage setCurrentPage={setCurrentPage} />;
     } else if (currentPage === 'about') {
       return <AboutPage setCurrentPage={setCurrentPage} />;
-    } else if (currentPage === 'register') {
-      return <RegisterPage setCurrentPage={setCurrentPage} />;
     }
-    return <LoginPage setCurrentPage={setCurrentPage} />;
+    return <RoleSelection setCurrentPage={setCurrentPage} />;
+  }
+
+  // Si l'utilisateur est connecté mais n'a pas de rôle, rediriger vers sélection de rôle
+  if (isAuthenticated && !user?.role && currentPage !== 'role-selection') {
+    return <RoleSelection setCurrentPage={setCurrentPage} />;
   }
 
   const renderPage = () => {
@@ -75,8 +92,13 @@ function AppContent() {
       case 'contact':
         return <ContactPage setCurrentPage={setCurrentPage} />;
       
-      case 'login':
-      case 'register':
+      case 'profile-completion':
+        return <ProfileCompletion setCurrentPage={setCurrentPage} />;
+      
+      case 'role-selection':
+        return <RoleSelection setCurrentPage={setCurrentPage} />;
+      
+      case 'auth':
         // Rediriger vers main-home si connecté
         setCurrentPage('main-home');
         return null;
@@ -108,7 +130,7 @@ function AppContent() {
         );
       
       case 'my-applications':
-        return <div className="text-center py-12">Mes candidatures - En cours de développement</div>;
+        return <MyApplications setCurrentPage={setCurrentPage} />;
       
       case 'payment-history':
         return <PaymentHistory setCurrentPage={setCurrentPage} />;

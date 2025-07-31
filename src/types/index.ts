@@ -2,8 +2,21 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'agent' | 'enterprise' | 'admin';
+  role?: 'agent' | 'enterprise' | 'admin';
   avatar?: string;
+  profilePicture?: string;
+  profileCompleted?: boolean;
+  location?: string;
+  phone?: string;
+  bio?: string;
+  skills?: string[];
+  paymentMethod?: string;
+  paymentNumber?: string;
+  companyName?: string;
+  sector?: string;
+  description?: string;
+  website?: string;
+  logo?: string;
   createdAt: string;
 }
 

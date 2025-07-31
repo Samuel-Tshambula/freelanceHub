@@ -80,7 +80,7 @@ const HomePage: React.FC<HomePageProps> = ({ setCurrentPage }) => {
   ];
 
   const handleLoginRedirect = () => {
-    setCurrentPage('login');
+    setCurrentPage('auth');
   };
 
   const renderStars = (rating: number) => {
@@ -111,12 +111,7 @@ const HomePage: React.FC<HomePageProps> = ({ setCurrentPage }) => {
               </button>
               {!isAuthenticated ? (
                 <>
-                  <button
-                    onClick={() => setCurrentPage('register')}
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2"
-                  >
-                    S'inscrire
-                  </button>
+
                   <button
                     onClick={handleLoginRedirect}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
