@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Upload, FileText } from 'lucide-react';
 
 interface PostTaskProps {
   setCurrentPage: (page: string) => void;
@@ -18,7 +18,8 @@ const PostTask: React.FC<PostTaskProps> = ({ setCurrentPage }) => {
     duration: '',
     deadline: '',
     skills: [] as string[],
-    requiredProofs: [] as string[]
+    requiredProofs: [] as string[],
+    attachments: [] as File[]
   });
 
   const [newSkill, setNewSkill] = useState('');
@@ -169,14 +170,77 @@ const PostTask: React.FC<PostTaskProps> = ({ setCurrentPage }) => {
                 required
               >
                 <option value="">Sélectionner une durée</option>
-                <option value="1-2 jours">1-2 jours</option>
-                <option value="3-5 jours">3-5 jours</option>
-                <option value="1 semaine">1 semaine</option>
-                <option value="2 semaines">2 semaines</option>
-                <option value="1 mois">1 mois</option>
-                <option value="Plus d'1 mois">Plus d'1 mois</option>
+                <option value="1-3 heures">1-3 heures</option>
+                <option value="4-8 heures">4-8 heures</option>
+                <option value="1 jour">1 jour</option>
+                <option value="2-3 jours">2-3 jours</option>
+                <option value="4-7 jours">4-7 jours</option>
+                <option value="1-2 semaines">1-2 semaines</option>
+                <option value="3-4 semaines">3-4 semaines</option>
+                <option value="1-2 mois">1-2 mois</option>
+                <option value="Plus de 2 mois">Plus de 2 mois</option>
               </select>
             </div>
+          </div>
+
+          {/* Attachments */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fichiers de référence (optionnel)
+            </label>
+            <p className="text-sm text-gray-600 mb-3">
+              Ajoutez des images, PDF, Word, Excel pour aider les freelances à comprendre votre projet
+            </p>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  setFormData(prev => ({ ...prev, attachments: [...prev.attachments, ...files] }));
+                }}
+                className="hidden"
+                id="file-upload"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600">
+                  Cliquez pour ajouter des fichiers ou glissez-déposez
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  PDF, Word, Excel, Images (max 10MB par fichier)
+                </p>
+              </label>
+            </div>
+
+            {formData.attachments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-gray-700">Fichiers ajoutés :</p>
+                {formData.attachments.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-700">{file.name}</span>
+                      <span className="text-xs text-gray-500 ml-2">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          attachments: prev.attachments.filter((_, i) => i !== index)
+                        }));
+                      }}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Deadline */}

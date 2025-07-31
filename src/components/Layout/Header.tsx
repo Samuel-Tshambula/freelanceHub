@@ -2,16 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
 import { 
-  Menu, 
-  X, 
   Bell, 
   User, 
   LogOut, 
   Settings,
-  Briefcase,
-  Users,
-  BarChart3,
-  DollarSign
+  Home,
+  Info,
+  Phone
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -22,47 +19,19 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage }) => {
   const { user, logout } = useAuth();
   const { notifications } = useApp();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const getMenuItems = () => {
-    if (!user) return [];
-    
-    switch (user.role) {
-      case 'agent':
-        return [
-          { key: 'dashboard', label: 'Tableau de bord', icon: BarChart3 },
-          { key: 'tasks', label: 'Tâches disponibles', icon: Briefcase },
-          { key: 'my-applications', label: 'Mes candidatures', icon: Users },
-          { key: 'payment-history', label: 'Mes paiements', icon: DollarSign },
-          { key: 'profile', label: 'Mon profil', icon: User },
-        ];
-      case 'enterprise':
-        return [
-          { key: 'dashboard', label: 'Tableau de bord', icon: BarChart3 },
-          { key: 'my-tasks', label: 'Mes tâches', icon: Briefcase },
-          { key: 'post-task', label: 'Publier une tâche', icon: Users },
-          { key: 'payment-history', label: 'Historique paiements', icon: DollarSign },
-          { key: 'profile', label: 'Mon profil', icon: User },
-        ];
-      case 'admin':
-        return [
-          { key: 'dashboard', label: 'Administration', icon: BarChart3 },
-          { key: 'tasks', label: 'Toutes les tâches', icon: Briefcase },
-          { key: 'users', label: 'Utilisateurs', icon: Users },
-          { key: 'reports', label: 'Rapports', icon: Settings },
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const menuItems = getMenuItems();
+  // Navigation publique commune
+  const publicNavItems = [
+    { key: 'main-home', label: 'Accueil', icon: Home },
+    { key: 'about', label: 'À propos', icon: Info },
+    { key: 'contact', label: 'Contact', icon: Phone }
+  ];
 
   return (
-    <header className="bg-white shadow-md relative z-50">
+    <header className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 lg:h-20">
           {/* Logo */}
@@ -72,33 +41,43 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage }) => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          {user && (
-            <nav className="hidden lg:flex items-center space-x-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => setCurrentPage(item.key)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                      currentPage === item.key
-                        ? 'text-blue-600 bg-blue-50 shadow-sm'
-                        : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="hidden xl:block">{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          )}
+          {/* Navigation publique */}
+          <nav className="hidden lg:flex items-center space-x-1">
+            {publicNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setCurrentPage(item.key)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    currentPage === item.key
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
 
           {/* Right side */}
           <div className="flex items-center space-x-2 lg:space-x-4">
             {user ? (
               <>
+                {/* Bouton Dashboard */}
+                <button
+                  onClick={() => setCurrentPage('dashboard')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    currentPage === 'dashboard'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  }`}
+                >
+                  Dashboard
+                </button>
+                
                 {/* Notifications */}
                 <button
                   onClick={() => setCurrentPage('notifications')}
@@ -158,13 +137,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage }) => {
                   )}
                 </div>
 
-                {/* Mobile menu button */}
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="lg:hidden p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
-                >
-                  {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
+
               </>
             ) : (
               <button
@@ -177,33 +150,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage }) => {
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {isMenuOpen && user && (
-          <div className="lg:hidden py-4 border-t bg-gray-50">
-            <nav className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => {
-                      setCurrentPage(item.key);
-                      setIsMenuOpen(false);
-                    }}
-                    className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-left transition-all duration-200 mx-2 ${
-                      currentPage === item.key
-                        ? 'text-blue-600 bg-white shadow-sm border border-blue-100'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-white hover:shadow-sm'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        )}
+
       </div>
     </header>
   );

@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppProvider } from './contexts/AppContext';
 import Header from './components/Layout/Header';
+import DashboardHeader from './components/Layout/DashboardHeader';
 import LoginPage from './components/Auth/LoginPage';
 import RegisterPage from './components/Auth/RegisterPage';
 import HomePage from './components/Public/HomePage';
 import AboutPage from './components/Public/AboutPage';
+import ContactPage from './components/Public/ContactPage';
+import MainHomePage from './components/Common/MainHomePage';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import EnterpriseDashboard from './components/Dashboard/EnterpriseDashboard';
 import TaskList from './components/Tasks/TaskList';
@@ -18,10 +21,10 @@ function AppContent() {
   const { user, isAuthenticated } = useAuth();
   const [currentPage, setCurrentPage] = useState('home');
 
-  // Rediriger vers le dashboard lors de la connexion
+  // Rediriger vers main-home lors de la connexion
   useEffect(() => {
-    if (isAuthenticated && (currentPage === 'login' || currentPage === 'register')) {
-      setCurrentPage('dashboard');
+    if (isAuthenticated && (currentPage === 'login' || currentPage === 'register' || currentPage === 'home')) {
+      setCurrentPage('main-home');
     }
   }, [isAuthenticated, currentPage]);
 
@@ -39,16 +42,19 @@ function AppContent() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':
-        return <HomePage setCurrentPage={setCurrentPage} />;
+      case 'main-home':
+        return <MainHomePage setCurrentPage={setCurrentPage} />;
       
       case 'about':
         return <AboutPage setCurrentPage={setCurrentPage} />;
       
+      case 'contact':
+        return <ContactPage setCurrentPage={setCurrentPage} />;
+      
       case 'login':
       case 'register':
-        // Rediriger vers dashboard si connecté
-        setCurrentPage('dashboard');
+        // Rediriger vers main-home si connecté
+        setCurrentPage('main-home');
         return null;
       
       case 'dashboard':
@@ -99,8 +105,12 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {isAuthenticated && <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />}
-      <main className={isAuthenticated ? "max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8" : ""}>
+      {isAuthenticated && (
+        currentPage === 'main-home' || currentPage === 'about' || currentPage === 'contact' ? 
+          <Header currentPage={currentPage} setCurrentPage={setCurrentPage} /> :
+          <DashboardHeader currentPage={currentPage} setCurrentPage={setCurrentPage} />
+      )}
+      <main className={isAuthenticated ? (currentPage !== 'main-home' ? "max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 pt-20" : "pt-16") : ""}>
         {renderPage()}
       </main>
     </div>

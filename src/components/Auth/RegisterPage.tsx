@@ -19,7 +19,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ setCurrentPage }) => {
     };
     
     login(mockUser);
-    setCurrentPage('dashboard');
+    setCurrentPage('main-home');
   };
 
   return (
