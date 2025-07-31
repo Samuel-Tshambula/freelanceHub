@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
+import Avatar from '../Common/Avatar';
+import { getProfileImage } from '../../utils/profileUtils';
 import { 
   Edit, 
   Save, 
@@ -14,7 +16,8 @@ import {
   DollarSign,
   ExternalLink,
   Plus,
-  Trash2
+  Trash2,
+  Camera
 } from 'lucide-react';
 
 interface UserProfileProps {
@@ -41,14 +44,14 @@ const UserProfile: React.FC<UserProfileProps> = () => {
     : enterprises.find(e => e.id === user?.id);
 
   const [profileData, setProfileData] = useState({
-    bio: currentUserData?.role === 'agent' 
-      ? (currentUserData as any).bio || "Développeur web passionné"
-      : (currentUserData as any).description || "Entreprise innovante",
-    location: "Paris, France",
-    website: (currentUserData as any).website || (user?.role === 'agent' ? "https://portfolio.dev" : "https://entreprise.com"),
-    phone: "+33 6 12 34 56 78",
-    skills: currentUserData?.role === 'agent' 
-      ? (currentUserData as any).skills || ["React", "Node.js", "TypeScript"]
+    bio: user?.role === 'agent' 
+      ? (currentUserData as any)?.bio || user?.bio || "Développeur web passionné"
+      : (currentUserData as any)?.description || user?.description || "Entreprise innovante",
+    location: user?.location || "Paris, France",
+    website: (currentUserData as any)?.website || user?.website || (user?.role === 'agent' ? "https://portfolio.dev" : "https://entreprise.com"),
+    phone: user?.phone || "+33 6 12 34 56 78",
+    skills: user?.role === 'agent' 
+      ? (currentUserData as any)?.skills || user?.skills || ["React", "Node.js", "TypeScript"]
       : ["Développement Web", "Design UX/UI", "Marketing Digital"],
     portfolio: [
       {
@@ -59,9 +62,9 @@ const UserProfile: React.FC<UserProfileProps> = () => {
         type: "project"
       }
     ],
-    paymentMethods: currentUserData?.role === 'agent' 
+    paymentMethods: user?.role === 'agent' 
       ? [
-          { method: (currentUserData as any).paymentMethod || "Orange Money", number: (currentUserData as any).paymentNumber || "+243 89 123 4567" }
+          { method: (currentUserData as any)?.paymentMethod || user?.paymentMethod || "Orange Money", number: (currentUserData as any)?.paymentNumber || user?.paymentNumber || "+243 89 123 4567" }
         ]
       : []
   });
@@ -147,10 +150,42 @@ const UserProfile: React.FC<UserProfileProps> = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header avec photo de profil */}
+      <div className="bg-white rounded-lg border p-6">
+        <div className="flex items-center space-x-6">
+          <div className="relative">
+            <Avatar 
+              src={getProfileImage(user)}
+              alt={user?.name}
+              size="xl"
+              className="border-4 border-white shadow-lg"
+            />
+            {isEditing && (
+              <button className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+                <Camera className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">{user?.name}</h1>
+            <p className="text-gray-600 mb-2">{user?.email}</p>
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <span className="capitalize bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                {user?.role === 'agent' ? 'Freelance' : 'Entreprise'}
+              </span>
+              {user?.isVerified && (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  ✓ Vérifié
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mon Profil</h1>
+          <h2 className="text-xl font-semibold text-gray-900">Informations détaillées</h2>
           <p className="text-gray-600">
             Gérez vos informations personnelles et votre portfolio
           </p>

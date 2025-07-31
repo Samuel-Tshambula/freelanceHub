@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
+import Avatar from '../Common/Avatar';
+import { getProfileImage } from '../../utils/profileUtils';
 import { 
   Bell, 
   User, 
@@ -97,9 +99,11 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage }) => {
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className="flex items-center space-x-2 p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
                   >
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
-                    </div>
+                    <Avatar 
+                      src={getProfileImage(user)}
+                      alt={user.name}
+                      size="md"
+                    />
                     <span className="hidden md:block text-sm font-medium truncate max-w-24">{user.name}</span>
                   </button>
 

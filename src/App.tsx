@@ -5,6 +5,7 @@ import Header from './components/Layout/Header';
 import DashboardHeader from './components/Layout/DashboardHeader';
 import LoginPage from './components/Auth/LoginPage';
 import RegisterPage from './components/Auth/RegisterPage';
+import GoogleCallback from './components/Auth/GoogleCallback';
 import HomePage from './components/Public/HomePage';
 import AboutPage from './components/Public/AboutPage';
 import ContactPage from './components/Public/ContactPage';
@@ -21,6 +22,15 @@ function AppContent() {
   const { user, isAuthenticated, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState('home');
 
+  // Vérifier si c'est un callback Google
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('token') && urlParams.get('user')) {
+      setCurrentPage('google-callback');
+      return;
+    }
+  }, []);
+
   // Rediriger vers main-home lors de la connexion
   useEffect(() => {
     if (isAuthenticated && (currentPage === 'login' || currentPage === 'register' || currentPage === 'home')) {
@@ -34,6 +44,11 @@ function AppContent() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  // Gérer le callback Google même si pas encore authentifié
+  if (currentPage === 'google-callback') {
+    return <GoogleCallback setCurrentPage={setCurrentPage} />;
   }
 
   if (!isAuthenticated) {

@@ -1,6 +1,7 @@
-
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
+import Avatar from '../Common/Avatar';
+import { getProfileImage } from '../../utils/profileUtils';
 import { 
   Briefcase, 
   DollarSign, 
@@ -60,11 +61,21 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ setCurrentPage }) => {
     <div className="space-y-6">
       {/* Welcome */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold">Bonjour, {agent?.name} ! 👋</h1>
-        <p className="mt-2 opacity-90">
-          Vous avez {myApplications.filter(app => app.status === 'pending').length} candidature(s) en attente
-          et {myTasks.filter(task => task.status === 'in_progress').length} tâche(s) active(s).
-        </p>
+        <div className="flex items-center space-x-4">
+          <Avatar 
+            src={getProfileImage(user)}
+            alt={user?.name}
+            size="lg"
+            className="border-2 border-white/20"
+          />
+          <div>
+            <h1 className="text-2xl font-bold">Bonjour, {agent?.name} ! 👋</h1>
+            <p className="mt-2 opacity-90">
+              Vous avez {myApplications.filter(app => app.status === 'pending').length} candidature(s) en attente
+              et {myTasks.filter(task => task.status === 'in_progress').length} tâche(s) active(s).
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}

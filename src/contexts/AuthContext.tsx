@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: (user: User | null) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -90,8 +91,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initAuth();
   }, []);
 
+  const updateUser = (newUser: User | null) => {
+    setUser(newUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, setUser: updateUser, isAuthenticated, loading }}>
       {children}
     </AuthContext.Provider>
   );

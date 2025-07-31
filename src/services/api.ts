@@ -71,6 +71,20 @@ export const authAPI = {
 
   getProfile: async () => {
     return await apiRequest('/auth/me');
+  },
+
+  googleSuccess: async (token: string) => {
+    const response = await apiRequest('/auth/google/success', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
+    
+    if (response.success) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    
+    return response;
   }
 };
 

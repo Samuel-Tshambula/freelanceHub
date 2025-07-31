@@ -1,6 +1,7 @@
-
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
+import Avatar from '../Common/Avatar';
+import { getProfileImage } from '../../utils/profileUtils';
 import { 
   Briefcase, 
   Users, 
@@ -64,11 +65,21 @@ const EnterpriseDashboard: React.FC<EnterpriseDashboardProps> = ({ setCurrentPag
     <div className="space-y-6">
       {/* Welcome */}
       <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold">Bonjour, {enterprise?.companyName || user?.name} ! 🏢</h1>
-        <p className="mt-2 opacity-90">
-          Vous avez {myApplications.filter(app => app.status === 'pending').length} nouvelle(s) candidature(s)
-          et {myTasks.filter(task => task.status === 'in_progress').length} tâche(s) en cours.
-        </p>
+        <div className="flex items-center space-x-4">
+          <Avatar 
+            src={getProfileImage(user) || enterprise?.logo}
+            alt={enterprise?.companyName || user?.name}
+            size="lg"
+            className="border-2 border-white/20"
+          />
+          <div>
+            <h1 className="text-2xl font-bold">Bonjour, {enterprise?.companyName || user?.name} ! 🏢</h1>
+            <p className="mt-2 opacity-90">
+              Vous avez {myApplications.filter(app => app.status === 'pending').length} nouvelle(s) candidature(s)
+              et {myTasks.filter(task => task.status === 'in_progress').length} tâche(s) en cours.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}
