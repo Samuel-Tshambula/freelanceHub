@@ -156,14 +156,18 @@ function AppContent() {
     }
   };
 
+  // Vérifier s'il y a une erreur d'authentification pour masquer la navbar
+  const hasAuthError = localStorage.getItem('authError');
+  const shouldShowNavbar = isAuthenticated && !hasAuthError;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {isAuthenticated && (
+      {shouldShowNavbar && (
         currentPage === 'main-home' || currentPage === 'about' || currentPage === 'contact' ? 
           <Header currentPage={currentPage} setCurrentPage={setCurrentPage} /> :
           <DashboardHeader currentPage={currentPage} setCurrentPage={setCurrentPage} />
       )}
-      <main className={isAuthenticated ? (currentPage !== 'main-home' ? "max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 pt-20" : "pt-16") : ""}>
+      <main className={shouldShowNavbar ? (currentPage !== 'main-home' ? "max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 pt-20" : "pt-16") : ""}>
         {renderPage()}
       </main>
     </div>
